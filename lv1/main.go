@@ -22,6 +22,7 @@ func main() {
 		panic(err)
 		return
 	}
+	go tool.FirstClientManager.Start()
 
 	router := gin.Default()
 	router.POST("register", api.Register)

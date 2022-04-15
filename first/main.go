@@ -18,7 +18,7 @@ func main() {
 	router := gin.Default()
 
 	router.GET("/ws", ws)
-	router.Run()
+	router.Run(":8081")
 }
 
 //使用websocket协议，需要将http协议经过第三方框架处理升级，添加websocket协议专属字段

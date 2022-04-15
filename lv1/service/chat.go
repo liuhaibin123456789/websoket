@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"github.com/gorilla/websocket"
 	"log"
 	"websoket/lv1/dao"
@@ -9,17 +10,19 @@ import (
 )
 
 func Chat(phone string, conn *websocket.Conn) error {
-	client := &tool.Client{}
+	//注意在使用管道前要先创建管道
+	client := &tool.Client{Message: make(chan []byte)}
 	//查询用户信息
 	err := dao.SelectUser(client, phone)
 	if err != nil {
 		log.Println(err)
 		return err
 	}
-	client.Message <- []byte(client.UserName + "加入聊天室")
 	client.Conn = conn
+	fmt.Println("1:", client)
 	//注册客户端
 	tool.FirstClientManager.Register <- client
+	fmt.Println("2:", client)
 	//启动一个协程,将该客户端的消息广播
 	go client.Read(tool.FirstClientManager)
 	//启动一个协程，从客户端与服务端的连接读取消息

@@ -14,23 +14,20 @@ func Chat(c *gin.Context) {
 	if !res {
 		err := errors.New("phone is not got")
 		log.Println(err)
-		tool.JsonOut(c, err, "cookie 获取失败")
+		//注意http请求被劫持，无法保障原有的http请求的有效性，所以使用http对应的方法可能会报错
 		return
 	}
 	//协议升级
 	conn, err := model.Upgrade.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		log.Println(err)
-		tool.JsonOut(c, err, "协议升级失败")
 		return
 	}
 	err = service.Chat(phone.(string), conn)
 	if err != nil {
 		log.Println(err)
-		tool.JsonOut(c, err, "聊天创建失败")
 		return
 	}
-	tool.JsonOut(c, err, "欢迎进入聊天室")
 }
 
 func GetMessage(c *gin.Context) {

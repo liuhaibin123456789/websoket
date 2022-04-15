@@ -2,6 +2,7 @@ package tool
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gorilla/websocket"
 	"log"
 	"websoket/lv1/model"
@@ -20,27 +21,29 @@ func (c *Client) Write() {
 	defer func() {
 		c.Conn.Close()
 	}()
-	for {
+	for true {
 		select {
 		case message, ok := <-c.Message:
 			if !ok {
 				if err := c.Conn.WriteMessage(websocket.CloseMessage, []byte{}); err != nil {
-					log.Println(err)
+					fmt.Println(err)
 					return
 				}
 			}
 			//写入客户端
 			if err := c.Conn.WriteMessage(websocket.TextMessage, message); err != nil {
-				log.Println(err)
+				fmt.Println(err)
 				return
 			}
 		}
 	}
+	return
 }
 
 //Read 广播消息
 func (c *Client) Read(cm *ClientManager) {
 	defer func() {
+		cm.Unregister <- c
 		c.Conn.Close()
 	}()
 	for true {
@@ -93,7 +96,13 @@ func (cm *ClientManager) Start() {
 				log.Println(err)
 				return
 			}
-
+			bytes, err := json.Marshal(&model.Message{SenderId: client.Id, ChatRoomId: 1, Content: client.UserName + "进入聊天室"})
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			cm.Send(bytes, client)
+			fmt.Println("进入聊天室")
 		case client := <-cm.Unregister:
 			//关闭管道
 			close(client.Message)
@@ -104,10 +113,17 @@ func (cm *ClientManager) Start() {
 				RoomId: 1,
 				UserId: client.Id,
 			}
-			if err := GDB.Model(&model.RoomMember{}).Delete(rm).Error; err != nil {
+			if err := GDB.Model(&model.RoomMember{}).Where("user_id=?", client.Id).Delete(rm).Error; err != nil {
 				log.Println(err)
 				return
 			}
+			bytes, err := json.Marshal(&model.Message{SenderId: client.Id, ChatRoomId: 1, Content: client.UserName + "离开聊天室"})
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			cm.Send(bytes, client)
+			fmt.Println("离开聊天室")
 		case broadcast := <-cm.Broadcast:
 			for client := range cm.Clients {
 				select {
@@ -117,6 +133,7 @@ func (cm *ClientManager) Start() {
 					delete(cm.Clients, client)
 				}
 			}
+			cm.Send(broadcast, nil)
 		}
 	}
 }
