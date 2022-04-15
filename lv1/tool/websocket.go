@@ -1,10 +1,12 @@
 package tool
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/websocket"
 	"log"
+	"time"
 	"websoket/lv1/model"
 )
 
@@ -21,6 +23,7 @@ func (c *Client) Write() {
 	defer func() {
 		c.Conn.Close()
 	}()
+	ticker := time.NewTicker(55 * time.Second)
 	for true {
 		select {
 		case message, ok := <-c.Message:
@@ -35,6 +38,11 @@ func (c *Client) Write() {
 				fmt.Println(err)
 				return
 			}
+		//心跳,处理ping
+		case <-ticker.C:
+			if err := c.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				return
+			}
 		}
 	}
 	return
@@ -46,18 +54,22 @@ func (c *Client) Read(cm *ClientManager) {
 		cm.Unregister <- c
 		c.Conn.Close()
 	}()
+	c.Conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+	c.Conn.SetPongHandler(func(string) error { c.Conn.SetReadDeadline(time.Now().Add(60 * time.Second)); return nil })
 	for true {
 		_, message, err := c.Conn.ReadMessage()
 		if err != nil {
 			log.Println(err)
 			return
 		}
-		bytes, err := json.Marshal(model.Message{SenderId: c.Id, Content: string(message)})
+		bytes1, err := json.Marshal(model.Message{SenderId: c.Id, Content: string(message)})
 		if err != nil {
 			log.Println(err)
 			return
 		}
-		cm.Send(bytes, c)
+		//去掉json的空闲格式，压缩数据大小
+		bytes1 = bytes.TrimSpace(bytes.Replace(bytes1, []byte("\n"), []byte(" "), -1))
+		cm.Send(bytes1, c)
 	}
 }
 
@@ -96,12 +108,13 @@ func (cm *ClientManager) Start() {
 				log.Println(err)
 				return
 			}
-			bytes, err := json.Marshal(&model.Message{SenderId: client.Id, ChatRoomId: 1, Content: client.UserName + "进入聊天室"})
+			bytes1, err := json.Marshal(&model.Message{SenderId: client.Id, ChatRoomId: 1, Content: client.UserName + "进入聊天室"})
 			if err != nil {
 				log.Println(err)
 				return
 			}
-			cm.Send(bytes, client)
+			bytes1 = bytes.TrimSpace(bytes.Replace(bytes1, []byte("\n"), []byte(" "), -1))
+			cm.Send(bytes1, client)
 			fmt.Println("进入聊天室")
 		case client := <-cm.Unregister:
 			//关闭管道
@@ -117,12 +130,13 @@ func (cm *ClientManager) Start() {
 				log.Println(err)
 				return
 			}
-			bytes, err := json.Marshal(&model.Message{SenderId: client.Id, ChatRoomId: 1, Content: client.UserName + "离开聊天室"})
+			bytes1, err := json.Marshal(&model.Message{SenderId: client.Id, ChatRoomId: 1, Content: client.UserName + "离开聊天室"})
 			if err != nil {
 				log.Println(err)
 				return
 			}
-			cm.Send(bytes, client)
+			bytes1 = bytes.TrimSpace(bytes.Replace(bytes1, []byte("\n"), []byte(" "), -1))
+			cm.Send(bytes1, client)
 			fmt.Println("离开聊天室")
 		case broadcast := <-cm.Broadcast:
 			for client := range cm.Clients {
