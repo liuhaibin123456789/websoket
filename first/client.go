@@ -20,7 +20,7 @@ type CInterface interface {
 	// Write 往服务端写入广播消息
 	Write(*ClientsManger) error
 
-	// Read 从客户端的连接里读取消息
+	// Read 从客户端里读取消息,并写入连接
 	Read()
 }
 
