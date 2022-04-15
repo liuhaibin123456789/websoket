@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"github.com/gorilla/websocket"
 	"log"
 	"websoket/lv1/dao"
@@ -19,10 +18,10 @@ func Chat(phone string, conn *websocket.Conn) error {
 		return err
 	}
 	client.Conn = conn
-	fmt.Println("1:", client)
+	//fmt.Println("1:", client)
 	//注册客户端
 	tool.FirstClientManager.Register <- client
-	fmt.Println("2:", client)
+	//fmt.Println("2:", client)
 	//启动一个协程,将该客户端的消息广播
 	go client.Read(tool.FirstClientManager)
 	//启动一个协程，从客户端与服务端的连接读取消息
