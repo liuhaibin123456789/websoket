@@ -26,7 +26,7 @@ func main() {
 	router := gin.Default()
 	router.POST("register", api.Register)
 	router.POST("login", api.Login)
-	router.POST("chat", middlewares.CheckCookie, api.Chat)
+	router.GET("chat", middlewares.CheckCookie, api.Chat)
 	router.GET("message", middlewares.CheckCookie, api.GetMessage)
 	router.Run()
 }

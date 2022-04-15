@@ -12,7 +12,6 @@ func Register(user model.User) error {
 	if len(user.Phone) != 11 {
 		err := errors.New("the phone is wrong")
 		if err != nil {
-			log.Println(err)
 			return err
 		}
 	}
@@ -20,7 +19,6 @@ func Register(user model.User) error {
 	if length := len(user.Password); length < 8 || length > 16 {
 		err := errors.New("the password is wrong")
 		if err != nil {
-			log.Println(err)
 			return err
 		}
 	}

@@ -6,7 +6,7 @@ import (
 	"websoket/lv1/tool"
 )
 
-func SelectUser(client *model.Client, phone string) error {
+func SelectUser(client *tool.Client, phone string) error {
 	user := &model.UserSide{}
 	var id int
 

@@ -19,7 +19,7 @@ func Register(c *gin.Context) {
 		return
 	}
 	//生成cookie
-	c.SetCookie("phone", phone, 1000, "/", "", true, false)
+	c.SetCookie("phone", phone, 1000, "/", "", false, true)
 	tool.JsonOut(c, nil, "注册成功")
 }
 
@@ -34,6 +34,6 @@ func Login(c *gin.Context) {
 		return
 	}
 	//生成cookie
-	c.SetCookie("phone", phone, 1000, "/", "", true, false)
+	c.SetCookie("phone", phone, 1000, "/", "", false, true)
 	tool.JsonOut(c, nil, "登录成功")
 }

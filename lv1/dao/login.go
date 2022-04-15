@@ -12,7 +12,7 @@ func Register(user model.User) error {
 	tx := tool.GDB.Begin()
 
 	defer func() {
-		if r := recover; r != nil {
+		if r := recover(); r != nil {
 			tx.Rollback()
 		}
 	}()

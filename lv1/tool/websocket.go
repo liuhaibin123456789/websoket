@@ -1,10 +1,10 @@
-package model
+package tool
 
 import (
 	"encoding/json"
 	"github.com/gorilla/websocket"
 	"log"
-	"websoket/lv1/tool"
+	"websoket/lv1/model"
 )
 
 type Client struct {
@@ -49,7 +49,7 @@ func (c *Client) Read(cm *ClientManager) {
 			log.Println(err)
 			return
 		}
-		bytes, err := json.Marshal(Message{SenderId: c.Id, Content: string(message)})
+		bytes, err := json.Marshal(model.Message{SenderId: c.Id, Content: string(message)})
 		if err != nil {
 			log.Println(err)
 			return
@@ -85,11 +85,11 @@ func (cm *ClientManager) Start() {
 			//注册用户
 			cm.Clients[client] = true
 			//数据库操作：将用户存进对应普通成员表
-			var rm = &RoomMember{
+			var rm = &model.RoomMember{
 				RoomId: 1,
 				UserId: client.Id,
 			}
-			if err := tool.GDB.Model(&RoomMember{}).Create(rm).Error; err != nil {
+			if err := GDB.Model(&model.RoomMember{}).Create(rm).Error; err != nil {
 				log.Println(err)
 				return
 			}
@@ -100,11 +100,11 @@ func (cm *ClientManager) Start() {
 			//内存删除
 			delete(cm.Clients, client)
 			//数据库操作
-			var rm = &RoomMember{
+			var rm = &model.RoomMember{
 				RoomId: 1,
 				UserId: client.Id,
 			}
-			if err := tool.GDB.Model(&RoomMember{}).Delete(rm).Error; err != nil {
+			if err := GDB.Model(&model.RoomMember{}).Delete(rm).Error; err != nil {
 				log.Println(err)
 				return
 			}
@@ -123,7 +123,7 @@ func (cm *ClientManager) Start() {
 
 func (cm *ClientManager) Send(message []byte, ignoreClient *Client) {
 	//数据库保存消息
-	if err := tool.GDB.Model(&Message{}).Create(&Message{SenderId: ignoreClient.Id, ChatRoomId: 1, Content: string(message)}).Error; err != nil {
+	if err := GDB.Model(&model.Message{}).Create(&model.Message{SenderId: ignoreClient.Id, ChatRoomId: 1, Content: string(message)}).Error; err != nil {
 		log.Println(err)
 		return
 	}
